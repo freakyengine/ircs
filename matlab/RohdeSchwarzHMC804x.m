@@ -9,13 +9,6 @@ classdef RohdeSchwarzHMC804x < GenericInstrumentConnection
     % 
     % This script is not covering the complete device functionality.
     %
-    % status codes:
-    %  0    success
-    % -1    generic
-    % -2    address issue
-    % -3    message issue
-    % -4    communication issue
-    % -6    value error, e.g. over/underflow
     %
     % last update: 2019/09
     
@@ -31,52 +24,39 @@ classdef RohdeSchwarzHMC804x < GenericInstrumentConnection
         end
         
         % **** SET VOLTAGE ****
-        function status = set_voltage(obj, channel, value)
+        function set_voltage(obj, channel, value)
             
-            if ~( isnumeric(value) && isscalar(value) )
-                status = -6;
-                return;
-            end
-            if ~( isnumeric(channel) && isscalar(channel) && (channel <= 3) && (channel >= 1) )
-                status = -6;
-                return;
-            end
+            assert(obj.ValidateNumeric(value,0,32), ...
+                '[ERROR] voltage value out of range');
+            
+            assert(obj.ValidateNumeric(channel,1,3), ...
+                '[ERROR] channel number out of range');
             
             obj.write([ 'INST:NSEL ' num2str(channel) ]);
             obj.write([ 'VOLT ' num2str(value) 'V' ]);
-            
-            status = 0;
         end
         
         % **** SET CURRENT ****
-        function status = set_current(obj, channel, value)
+        function set_current(obj, channel, value)
             
-            if ~( isnumeric(value) && isscalar(value) )
-                status = -6;
-                return;
-            end
-            if ~( isnumeric(channel) && isscalar(channel) && (channel <= 3) && (channel >= 1) )
-                status = -6;
-                return;
-            end
+            assert(obj.ValidateNumeric(value,0,10), ...
+                '[ERROR] current value out of range');
+            
+            assert(obj.ValidateNumeric(channel,1,3), ...
+                '[ERROR] channel number out of range');
             
             obj.write([ 'INST:NSEL ' num2str(channel) ]);
             obj.write([ 'CURR ' num2str(value) 'A' ]);
-            
-            status = 0;
         end
         
         % **** SET OUTPUT STATE ****
-        function status = set_output_state(obj, channel, value)
+        function set_output_state(obj, channel, value)
             
-            if ~( isnumeric(value) || islogical(value) )
-                status = -6;
-                return;
-            end
-            if ~( isnumeric(channel) && isscalar(channel) && (channel <= 3) && (channel >= 1) )
-                status = -6;
-                return;
-            end
+            assert( obj.ValidateLogicalOrNumeric(value), ...
+                '[ERROR] output state must be logial');
+            
+            assert(obj.ValidateNumeric(channel,1,3), ...
+                '[ERROR] channel number out of range');
             
             obj.write([ 'INST:NSEL ' num2str(channel) ]);
             
@@ -85,38 +65,30 @@ classdef RohdeSchwarzHMC804x < GenericInstrumentConnection
             else
                 obj.write('OUTP 1');
             end
-            
-            status = 0;
         end
         
         % **** MEASURE ACTUAL OUTPUT VOLTAGE ****
-        function [ result, status ] = measure_voltage(obj, channel)
+        function result = measure_voltage(obj, channel)
             
-            if ~( isnumeric(channel) && isscalar(channel) && (channel <= 3) && (channel >= 1) )
-                status = -6;
-                return;
-            end
+            assert(obj.ValidateNumeric(channel,1,3), ...
+                '[ERROR] channel number out of range');
             
             obj.write([ 'INST:NSEL ' num2str(channel) ]);
-            [ result, ~ ] = obj.query( 'MEAS:VOLT?' );
             
-            result = str2double(result);
-            status = 0;
+            [ ~, read_data ] = obj.query( 'MEAS:VOLT?' );
+            result = str2double(read_data);
         end
         
         % **** MEASURE ACTUAL OUTPUT CURRENT ****
-        function [ result, status ] = measure_current(obj, channel)
+        function result = measure_current(obj, channel)
             
-            if ~( isnumeric(channel) && isscalar(channel) && (channel <= 3) && (channel >= 1) )
-                status = -6;
-                return;
-            end
+            assert(obj.ValidateNumeric(channel,1,3), ...
+                '[ERROR] channel number out of range');
             
             obj.write([ 'INST:NSEL ' num2str(channel) ]);
-            [ result, ~ ] = obj.query( 'MEAS:CURR?' );
             
-            result = str2double(result);
-            status = 0;
+            [ ~, read_data ] = obj.query( 'MEAS:CURR?' );
+            result = str2double(read_data);
         end
         
     end
